@@ -1,0 +1,86 @@
+version: 2
+
+sources:
+  - name: tpch
+    description: |
+      TPC-H（Transaction Processing Performance Council Benchmark H）データセット
+      意思決定支援システムのベンチマーク用サンプルデータ
+      Snowflakeのサンプルデータベースから取得
+    database: SNOWFLAKE_SAMPLE_DATA
+    schema: TPCH_SF1
+    tables:
+      - name: region
+        description: |
+          地域マスタテーブル
+          TPC-Hベンチマークの地域情報を格納
+          5つの地域（AFRICA、AMERICA、ASIA、EUROPE、MIDDLE EAST）を含む
+        columns:
+          - name: R_REGIONKEY
+            description: 地域キー（主キー）
+          - name: R_NAME
+            description: 地域名
+          - name: R_COMMENT
+            description: コメント・備考
+
+      - name: nation
+        description: |
+          国マスタテーブル
+          TPC-Hベンチマークの国情報を格納
+          25の国を含み、各国は5つの地域のいずれかに属する
+        columns:
+          - name: N_NATIONKEY
+            description: 国キー（主キー）
+          - name: N_NAME
+            description: 国名
+          - name: N_REGIONKEY
+            description: 地域キー（REGIONテーブルへの外部キー）
+          - name: N_COMMENT
+            description: コメント・備考
+
+      - name: customer
+        description: |
+          顧客マスタテーブル
+          TPC-Hベンチマークの顧客情報を格納
+          スケールファクター1（SF1）では約15万件の顧客データを含む
+        columns:
+          - name: C_CUSTKEY
+            description: 顧客キー（主キー）
+          - name: C_NAME
+            description: 顧客名
+          - name: C_ADDRESS
+            description: 顧客住所
+          - name: C_NATIONKEY
+            description: 国キー（NATIONテーブルへの外部キー）
+          - name: C_PHONE
+            description: 電話番号
+          - name: C_ACCTBAL
+            description: 口座残高
+          - name: C_MKTSEGMENT
+            description: 市場セグメント（AUTOMOBILE、BUILDING、FURNITURE、MACHINERY、HOUSEHOLDなど）
+          - name: C_COMMENT
+            description: コメント・備考
+
+      - name: orders
+        description: |
+          注文トランザクションテーブル
+          TPC-Hベンチマークの注文情報を格納
+          スケールファクター1（SF1）では約150万件の注文データを含む
+        columns:
+          - name: O_ORDERKEY
+            description: 注文キー（主キー）
+          - name: O_CUSTKEY
+            description: 顧客キー（CUSTOMERテーブルへの外部キー）
+          - name: O_ORDERSTATUS
+            description: 注文ステータス（F=完了、O=進行中、P=保留）
+          - name: O_TOTALPRICE
+            description: 注文合計金額
+          - name: O_ORDERDATE
+            description: 注文日
+          - name: O_ORDERPRIORITY
+            description: 注文優先度（1-URGENT、2-HIGH、3-MEDIUM、4-NOT SPECIFIED、5-LOW）
+          - name: O_CLERK
+            description: 担当事務員
+          - name: O_SHIPPRIORITY
+            description: 配送優先度
+          - name: O_COMMENT
+            description: コメント・備考

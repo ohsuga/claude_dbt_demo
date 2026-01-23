@@ -1,0 +1,125 @@
+version: 2
+
+models:
+  - name: int_orders__with_customer
+    description: |
+      注文と顧客情報を結合した中間テーブル
+      注文データに顧客情報と国情報を付加したビュー
+
+      ビジネス用途：
+      - 顧客別注文分析のベースデータ
+      - 市場セグメント別売上分析
+      - 国別・地域別売上分析
+
+      データ特性：
+      - 注文データを基準にLEFT JOINで結合
+      - 約150万件の注文レコード（SF1）
+      - 顧客情報と国情報を1レコードに集約
+
+      データ系譜：
+      - stg_tpch__orders → 注文情報
+      - stg_tpch__customer → 顧客情報
+      - stg_tpch__nation → 国情報
+    columns:
+      - name: order_key
+        description: |
+          注文キー（主キー）
+          各注文を一意に識別する整数値
+        data_tests:
+          - unique
+          - not_null
+
+      - name: customer_key
+        description: |
+          顧客キー（外部キー）
+          注文を行った顧客を示すキー
+          CUSTOMERテーブルへの参照キー
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__customer')
+                field: customer_key
+
+      - name: order_status
+        description: |
+          注文ステータス
+          注文の現在の状態（F=完了、O=進行中、P=保留）
+        data_tests:
+          - not_null
+
+      - name: total_price
+        description: |
+          注文合計金額
+          注文の総額（全ライン項目の合計）
+        data_tests:
+          - not_null
+
+      - name: order_date
+        description: |
+          注文日
+          注文が行われた日付
+        data_tests:
+          - not_null
+
+      - name: order_priority
+        description: |
+          注文優先度
+          注文の優先度レベル（1-URGENT、2-HIGH、3-MEDIUM、4-NOT SPECIFIED、5-LOW）
+        data_tests:
+          - not_null
+
+      - name: clerk
+        description: |
+          担当事務員
+          注文を処理した事務員の識別子
+        data_tests:
+          - not_null
+
+      - name: ship_priority
+        description: |
+          配送優先度
+          配送の優先度を示す整数値（0が最高優先度）
+
+      - name: customer_name
+        description: |
+          顧客名
+          注文を行った顧客の正式名称
+
+      - name: market_segment
+        description: |
+          市場セグメント
+          顧客が属する市場セグメント分類
+          （AUTOMOBILE、BUILDING、FURNITURE、MACHINERY、HOUSEHOLD）
+
+      - name: account_balance
+        description: |
+          口座残高
+          顧客の現在の口座残高
+
+      - name: nation_key
+        description: |
+          国キー（外部キー）
+          顧客が所属する国を示すキー
+          NATIONテーブルへの参照キー
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__nation')
+                field: nation_key
+
+      - name: nation_name
+        description: |
+          国名
+          顧客が所属する国の名称
+
+      - name: region_key
+        description: |
+          地域キー（外部キー）
+          国が所属する地域を示すキー
+          REGIONテーブルへの参照キー
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__region')
+                field: region_key

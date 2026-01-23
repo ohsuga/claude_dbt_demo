@@ -1,0 +1,291 @@
+version: 2
+
+models:
+  - name: stg_tpch__customer
+    description: |
+      顧客ステージングテーブル
+      SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMERテーブルから取得した顧客情報
+
+      ビジネス用途：
+      - 顧客分析の基礎データとして使用
+      - 注文データとの結合による顧客別売上分析
+      - 市場セグメント別の顧客分布分析
+
+      データ特性：
+      - 約15万件の顧客レコード（SF1）
+      - 各顧客は一意の顧客キーで識別
+      - 5つの市場セグメントに分類
+    columns:
+      - name: customer_key
+        description: |
+          顧客キー（主キー）
+          各顧客を一意に識別する整数値
+          元カラム名：C_CUSTKEY（INTEGER型）
+        data_tests:
+          - unique
+          - not_null
+
+      - name: customer_name
+        description: |
+          顧客名
+          顧客の正式名称
+          元カラム名：C_NAME（VARCHAR型）
+        data_tests:
+          - not_null
+
+      - name: address
+        description: |
+          顧客住所
+          顧客の所在地住所
+          元カラム名：C_ADDRESS（VARCHAR型）
+
+      - name: nation_key
+        description: |
+          国キー（外部キー）
+          顧客が所属する国を示すキー
+          NATIONテーブルへの参照キー
+          元カラム名：C_NATIONKEY（INTEGER型）
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__nation')
+                field: nation_key
+
+      - name: phone
+        description: |
+          電話番号
+          顧客の連絡先電話番号
+          国コード付きの形式（例：13-123-456-7890）
+          元カラム名：C_PHONE（VARCHAR型）
+
+      - name: account_balance
+        description: |
+          口座残高
+          顧客の現在の口座残高
+          単位：通貨単位（TPC-Hでは架空の通貨）
+          元カラム名：C_ACCTBAL（DECIMAL型）
+
+      - name: market_segment
+        description: |
+          市場セグメント
+          顧客が属する市場セグメント分類
+
+          取り得る値：
+          - AUTOMOBILE（自動車）
+          - BUILDING（建設）
+          - FURNITURE（家具）
+          - MACHINERY（機械）
+          - HOUSEHOLD（家庭用品）
+
+          元カラム名：C_MKTSEGMENT（VARCHAR型）
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['AUTOMOBILE', 'BUILDING', 'FURNITURE', 'MACHINERY', 'HOUSEHOLD']
+
+      - name: comment
+        description: |
+          コメント・備考
+          顧客に関する追加情報やコメント
+          元カラム名：C_COMMENT（VARCHAR型）
+
+  - name: stg_tpch__region
+    description: |
+      地域ステージングテーブル
+      SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.REGIONテーブルから取得した地域情報
+
+      ビジネス用途：
+      - 地域別の売上分析
+      - 国マスタとの結合による地理的分析
+      - グローバル市場の地域セグメント分析
+
+      データ特性：
+      - 5つの地域レコード
+      - 各地域は一意の地域キーで識別
+      - 全世界を5つの地域に区分
+    columns:
+      - name: region_key
+        description: |
+          地域キー（主キー）
+          各地域を一意に識別する整数値
+          元カラム名：R_REGIONKEY（INTEGER型）
+        data_tests:
+          - unique
+          - not_null
+
+      - name: region_name
+        description: |
+          地域名
+          地域の名称（AFRICA、AMERICA、ASIA、EUROPE、MIDDLE EAST）
+          元カラム名：R_NAME（VARCHAR型）
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['AFRICA', 'AMERICA', 'ASIA', 'EUROPE', 'MIDDLE EAST']
+
+      - name: comment
+        description: |
+          コメント・備考
+          地域に関する追加情報やコメント
+          元カラム名：R_COMMENT（VARCHAR型）
+
+  - name: stg_tpch__nation
+    description: |
+      国ステージングテーブル
+      SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.NATIONテーブルから取得した国情報
+
+      ビジネス用途：
+      - 国別の売上分析
+      - 顧客・サプライヤーの国別分布分析
+      - 地域との結合による地理的分析
+
+      データ特性：
+      - 25の国レコード
+      - 各国は一意の国キーで識別
+      - 各国は5つの地域のいずれかに属する
+    columns:
+      - name: nation_key
+        description: |
+          国キー（主キー）
+          各国を一意に識別する整数値
+          元カラム名：N_NATIONKEY（INTEGER型）
+        data_tests:
+          - unique
+          - not_null
+
+      - name: nation_name
+        description: |
+          国名
+          国の正式名称
+          元カラム名：N_NAME（VARCHAR型）
+        data_tests:
+          - not_null
+
+      - name: region_key
+        description: |
+          地域キー（外部キー）
+          国が所属する地域を示すキー
+          REGIONテーブルへの参照キー
+          元カラム名：N_REGIONKEY（INTEGER型）
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__region')
+                field: region_key
+
+      - name: comment
+        description: |
+          コメント・備考
+          国に関する追加情報やコメント
+          元カラム名：N_COMMENT（VARCHAR型）
+
+  - name: stg_tpch__orders
+    description: |
+      注文ステージングテーブル
+      SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERSテーブルから取得した注文情報
+
+      ビジネス用途：
+      - 注文トレンド分析
+      - 顧客別注文履歴分析
+      - 売上集計の基礎データ
+
+      データ特性：
+      - 約150万件の注文レコード（SF1）
+      - 各注文は一意の注文キーで識別
+      - 注文ステータス、優先度、配送優先度を含む
+    columns:
+      - name: order_key
+        description: |
+          注文キー（主キー）
+          各注文を一意に識別する整数値
+          元カラム名：O_ORDERKEY（INTEGER型）
+        data_tests:
+          - unique
+          - not_null
+
+      - name: customer_key
+        description: |
+          顧客キー（外部キー）
+          注文を行った顧客を示すキー
+          CUSTOMERテーブルへの参照キー
+          元カラム名：O_CUSTKEY（INTEGER型）
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__customer')
+                field: customer_key
+
+      - name: order_status
+        description: |
+          注文ステータス
+          注文の現在の状態を示すコード
+
+          取り得る値：
+          - F（完了：Finished）
+          - O（進行中：Open）
+          - P（保留：Pending）
+
+          元カラム名：O_ORDERSTATUS（VARCHAR型）
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['F', 'O', 'P']
+
+      - name: total_price
+        description: |
+          注文合計金額
+          注文の総額（全ライン項目の合計）
+          単位：通貨単位（TPC-Hでは架空の通貨）
+          元カラム名：O_TOTALPRICE（DECIMAL型）
+        data_tests:
+          - not_null
+
+      - name: order_date
+        description: |
+          注文日
+          注文が行われた日付
+          元カラム名：O_ORDERDATE（DATE型）
+        data_tests:
+          - not_null
+
+      - name: order_priority
+        description: |
+          注文優先度
+          注文の優先度レベル
+
+          取り得る値：
+          - 1-URGENT（緊急）
+          - 2-HIGH（高）
+          - 3-MEDIUM（中）
+          - 4-NOT SPECIFIED（指定なし）
+          - 5-LOW（低）
+
+          元カラム名：O_ORDERPRIORITY（VARCHAR型）
+        data_tests:
+          - not_null
+
+      - name: clerk
+        description: |
+          担当事務員
+          注文を処理した事務員の識別子
+          元カラム名：O_CLERK（VARCHAR型）
+        data_tests:
+          - not_null
+
+      - name: ship_priority
+        description: |
+          配送優先度
+          配送の優先度を示す整数値（0が最高優先度）
+          元カラム名：O_SHIPPRIORITY（INTEGER型）
+
+      - name: comment
+        description: |
+          コメント・備考
+          注文に関する追加情報やコメント
+          元カラム名：O_COMMENT（VARCHAR型）

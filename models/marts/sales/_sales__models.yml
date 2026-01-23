@@ -1,0 +1,135 @@
+version: 2
+
+models:
+  - name: fct_customer_orders
+    description: |
+      顧客別注文サマリーファクトテーブル
+      各顧客の注文履歴を集計したマートテーブル
+
+      ビジネス用途：
+      - 顧客別売上分析
+      - 優良顧客の特定（総購入金額・注文件数ベース）
+      - 市場セグメント別の顧客価値分析
+      - 顧客生涯価値（CLV）分析の基礎データ
+      - リピート購買分析
+
+      データ特性：
+      - 顧客ごとに1レコード
+      - 約15万件の顧客レコード（SF1）
+      - 集計期間は全注文履歴
+
+      データ系譜：
+      - int_orders__with_customer → 注文×顧客×国の結合データ
+      - customer_keyでGROUP BY集計
+    columns:
+      - name: customer_key
+        description: |
+          顧客キー（主キー）
+          各顧客を一意に識別する整数値
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__customer')
+                field: customer_key
+
+      - name: customer_name
+        description: |
+          顧客名
+          顧客の正式名称
+        data_tests:
+          - not_null
+
+      - name: market_segment
+        description: |
+          市場セグメント
+          顧客が属する市場セグメント分類
+          （AUTOMOBILE、BUILDING、FURNITURE、MACHINERY、HOUSEHOLD）
+        data_tests:
+          - not_null
+
+      - name: nation_name
+        description: |
+          国名
+          顧客が所属する国の名称
+
+      - name: region_key
+        description: |
+          地域キー
+          国が所属する地域を示すキー
+          REGIONテーブルへの参照キー
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__region')
+                field: region_key
+
+      - name: total_orders
+        description: |
+          総注文件数
+          顧客が過去に行った注文の総件数
+          リピート購買の指標として使用
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 1"
+
+      - name: total_revenue
+        description: |
+          総購入金額
+          顧客が過去に購入した総額
+          顧客価値の主要指標
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: avg_order_value
+        description: |
+          平均注文金額
+          1注文あたりの平均購入金額
+          計算式：総購入金額 ÷ 総注文件数
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: first_order_date
+        description: |
+          初回注文日
+          顧客が最初に注文した日付
+          顧客獲得日として使用
+        data_tests:
+          - not_null
+
+      - name: last_order_date
+        description: |
+          最終注文日
+          顧客が最後に注文した日付
+          休眠顧客判定に使用
+        data_tests:
+          - not_null
+
+      - name: customer_lifetime_days
+        description: |
+          顧客生涯日数
+          初回注文から最終注文までの経過日数
+          顧客エンゲージメント期間の指標
+          単一注文の顧客は0日
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+    data_tests:
+      - dbt_utils.expression_is_true:
+          name: check_avg_order_value_calculation
+          arguments:
+            expression: "abs(avg_order_value - (total_revenue / total_orders)) < 0.01"
+          config:
+            where: "total_orders > 0"
