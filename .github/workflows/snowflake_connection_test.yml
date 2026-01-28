@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Execute SQL
-        uses: snowflakedb/snowflake-cli-action@2.0.1
+        uses: snowflakedb/snowflake-cli-action@v.2.0.1
         with:
           container-options: "-e SNOWFLAKE_AUTHENTICATOR='https://token.actions.githubusercontent.com'"
         env:
