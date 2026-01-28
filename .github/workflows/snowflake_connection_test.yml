@@ -10,11 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Execute SQL
-        uses: snowflake-actions/sql-action@v1
+        uses: snowflake-computing/snowflake-cli-action@v2.0.1
         with:
-          account: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          username: ${{ secrets.SNOWFLAKE_USER }}
-          authenticator: 'https://token.actions.githubusercontent.com'
-          role: DBT_ROLE
-          warehouse: DBT_WH
-          query: "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE();"
+          container-options: "-e SNOWFLAKE_AUTHENTICATOR='https://token.actions.githubusercontent.com'"
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          run-cli-command: "sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE();'"
