@@ -9,13 +9,22 @@ jobs:
   test-connection:
     runs-on: ubuntu-latest
     steps:
-      - name: Execute SQL
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Snowflake CLI
         uses: snowflakedb/snowflake-cli-action@v.2.0.1
         with:
-          container-options: "-e SNOWFLAKE_AUTHENTICATOR='https://token.actions.githubusercontent.com'"
+          cli-version: "latest"
+          use-oidc: true
+
+      - name: Execute SQL via Snowflake CLI
         env:
           SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
           SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_AUTHENTICATOR: 'https://token.actions.githubusercontent.com'
           SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
           SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-          run-cli-command: "sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE();'"
+        run: |
+          snow sql -q "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE();"
+
