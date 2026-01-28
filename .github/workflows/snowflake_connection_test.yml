@@ -45,6 +45,7 @@ jobs:
           role = "<% env.SNOWFLAKE_ROLE %>"
           warehouse = "<% env.SNOWFLAKE_WAREHOUSE %>"
           EOF
+          chmod 600 ~/.snowflake/config.toml
           
       - name: Execute SQL via Snowflake CLI
         run: |
