@@ -49,9 +49,4 @@ jobs:
           
       - name: Execute SQL via Snowflake CLI
         run: |
-            snow sql -q "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE();" \
-            --account "$SNOWFLAKE_ACCOUNT" \
-            --user "$SNOWFLAKE_USER" \
-            --authenticator "$SNOWFLAKE_AUTHENTICATOR" \
-            --role "$SNOWFLAKE_ROLE" \
-            --warehouse "$SNOWFLAKE_WAREHOUSE"
+            snow sql -q "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE();" --connection "github_connection"
