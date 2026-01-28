@@ -15,7 +15,7 @@ jobs:
       - name: Install Snowflake CLI
         uses: snowflakedb/snowflake-cli-action@v.2.0.1
         with:
-          cli-version: "latest"
+          cli-version: "3.14.0"
           use-oidc: true
 
       - name: Execute SQL via Snowflake CLI
