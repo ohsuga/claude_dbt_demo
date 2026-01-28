@@ -1,6 +1,13 @@
 name: Snowflake Connection Test
-on: [workflow_dispatch] # 手動実行用
-
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '実行対象の環境を選択してください'
+        type: environment # これにより Environment の一覧がドロップダウンになります
+        required: true
+        default: 'test'
+        
 permissions:
   id-token: write # OIDCトークン生成に必須
   contents: read
@@ -8,6 +15,8 @@ permissions:
 jobs:
   test-connection:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
