@@ -16,6 +16,13 @@ jobs:
   test-connection:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_AUTHENTICATOR: 'https://token.actions.githubusercontent.com'
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+
 
     steps:
       - name: Checkout repository
@@ -27,13 +34,19 @@ jobs:
           cli-version: "3.14.0"
           use-oidc: true
 
+      - name: Create Snowflake Config
+        run: |
+          mkdir -p ~/.snowflake
+          cat <<EOF > ~/.snowflake/config.toml
+          [connections.github_connection]
+          account = "<% env.SNOWFLAKE_ACCOUNT %>"
+          user = "<% env.SNOWFLAKE_USER %>"
+          authenticator = "<% env.SNOWFLAKE_AUTHENTICATOR %>"
+          role = "<% env.SNOWFLAKE_ROLE %>"
+          warehouse = "<% env.SNOWFLAKE_WAREHOUSE %>"
+          EOF
+          
       - name: Execute SQL via Snowflake CLI
-        env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-          SNOWFLAKE_AUTHENTICATOR: 'https://token.actions.githubusercontent.com'
-          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
         run: |
             snow sql -q "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE();" \
             --account "$SNOWFLAKE_ACCOUNT" \
