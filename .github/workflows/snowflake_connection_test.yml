@@ -1,0 +1,20 @@
+name: Snowflake Connection Test
+on: [workflow_dispatch] # 手動実行用
+
+permissions:
+  id-token: write # OIDCトークン生成に必須
+  contents: read
+
+jobs:
+  test-connection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute SQL
+        uses: snowflake-actions/sql-action@v1
+        with:
+          account: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          username: ${{ secrets.SNOWFLAKE_USER }}
+          authenticator: 'https://token.actions.githubusercontent.com'
+          role: DBT_ROLE
+          warehouse: DBT_WH
+          query: "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE();"
