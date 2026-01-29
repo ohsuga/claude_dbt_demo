@@ -20,8 +20,8 @@ claude_dbt_demo:
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
       schema: "{{ env_var('DBT_SCHEMA', 'DBT_CI') }}"
-      authenticator: snowflake_jwt
-      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '/tmp/snowflake_key.p8') }}"
+      authenticator: oauth
+      token: "{{ env_var('SNOWFLAKE_OIDC_TOKEN') }}"
       threads: 4
 
     prod:
@@ -32,6 +32,7 @@ claude_dbt_demo:
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
       schema: DBT_PROD
-      authenticator: snowflake_jwt
-      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '/tmp/snowflake_key.p8') }}"
+      authenticator: oauth
+      token: "{{ env_var('SNOWFLAKE_OIDC_TOKEN') }}"
       threads: 8
+
