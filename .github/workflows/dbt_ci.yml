@@ -76,6 +76,9 @@ jobs:
         env:
           DBT_ENV_SECRET_TOKEN: ${{ env.DBT_ENV_SECRET_TOKEN }}
           
+      - name: check token1
+        run: echo "Token length is ${#DBT_ENV_SECRET_TOKEN}"
+
       - name: Create profiles.yml from template
         run: cp profiles.yml.template profiles.yml
 
@@ -93,8 +96,14 @@ jobs:
           mkdir -p state
           cp main-branch/target/manifest.json state/manifest.json
 
+      - name: check token2
+        run: echo "Token length is ${#DBT_ENV_SECRET_TOKEN}"
+
       - name: Run dbt debug
         run: dbt debug --target ci
+
+      - name: check token3
+        run: echo "Token length is ${#DBT_ENV_SECRET_TOKEN}"
 
       - name: Create PR schema
         run: |
