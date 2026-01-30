@@ -34,7 +34,7 @@ jobs:
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
       # SNOWFLAKE_AUTHENTICATOR: 'https://token.actions.githubusercontent.com'
-      SNOWFLAKE_AUTHENTICATOR: oauth
+      SNOWFLAKE_AUTHENTICATOR: jet
       SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
       SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
       SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
