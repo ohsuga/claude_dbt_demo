@@ -87,7 +87,7 @@ jobs:
           cp main-branch/target/manifest.json state/manifest.json
 
       - name: Run dbt debug
-        run: dbt debug --target ci
+        run: dbt -v debug --target ci
 
       - name: Create PR schema
         run: |
