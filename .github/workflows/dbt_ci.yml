@@ -69,7 +69,7 @@ jobs:
           cp ../profiles.yml.template profiles.yml
           export DBT_PROFILES_DIR=.
           dbt deps
-          dbt parse --target prod --profiles-dir .
+          dbt parse --target ci --profiles-dir .
           cd ..
           mkdir -p state
           cp main-branch/target/manifest.json state/manifest.json
