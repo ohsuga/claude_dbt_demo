@@ -57,6 +57,29 @@ jobs:
           pip install --upgrade pip
           pip install "dbt-core==1.10.*" "dbt-snowflake==1.10.*"
 
+      - name: Get GitHub OIDC Token
+        id: get_token
+        run: |
+          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://snowflake.com" | jq -r '.value')
+          echo "SNOWFLAKE_TOKEN=$TOKEN" >> $GITHUB_ENV
+          
+      - name: Create Snowflake Config
+        run: |
+          mkdir -p ~/.snowflake
+          cat <<EOF > ~/.snowflake/config.toml
+          [connections.ci_connection]
+          account = "${{ secrets.SNOWFLAKE_ACCOUNT }}"
+          user = "${{ secrets.SNOWFLAKE_USER }}"
+          role = "${{ secrets.SNOWFLAKE_ROLE }}"
+          warehouse = "${{ secrets.SNOWFLAKE_WAREHOUSE }}"
+          database = "${{ secrets.SNOWFLAKE_DATABASE }}"
+          authenticator = "WORKLOAD_IDENTITY"
+          workload_identity_provider = "OIDC"
+          token = "${{ env.SNOWFLAKE_TOKEN }}"
+          EOF
+          chmod 600 ~/.snowflake/config.toml
+          
       - name: Create profiles.yml from template
         run: cp profiles.yml.template profiles.yml
 
