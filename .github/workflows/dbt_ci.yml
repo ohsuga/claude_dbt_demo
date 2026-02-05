@@ -74,6 +74,10 @@ jobs:
           mkdir -p state
           cp main-branch/target/manifest.json state/manifest.json
 
+      - name: check in dbt read parameter
+        run: |
+          dbt debug --target ci
+          
       - name: Create PR schema
         run: |
           dbt run-operation create_schema_if_not_exists \
