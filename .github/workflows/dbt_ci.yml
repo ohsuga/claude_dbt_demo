@@ -57,7 +57,7 @@ jobs:
       - name: Install dbt
         run: |
           pip install --upgrade pip
-          pip install "dbt-core==1.10.*" "dbt-snowflake==1.10.*"
+          pip install "dbt-core==1.11.*" "dbt-snowflake==1.11.*"
 
       - name: Get GitHub OIDC Token
         id: get_token
