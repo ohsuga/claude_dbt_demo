@@ -32,7 +32,6 @@ claude_dbt_demo:
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
       schema: DBT_PROD
-      authenticator: oauth
-      token: "{{ env_var('DBT_ENV_SECRET_TOKEN') }}"
+      authenticator: workload_identity
+      workload_identity_provider: OIDC
       threads: 8
-
