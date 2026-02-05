@@ -14,14 +14,8 @@ claude_dbt_demo:
 
     ci:
       type: snowflake
-      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
-      user: "{{ env_var('SNOWFLAKE_USER') }}"
-      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
-      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
-      database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+      connection_name: ci_connection
       schema: "{{ env_var('DBT_SCHEMA', 'DBT_CI') }}"
-      authenticator: workload_identity
-      workload_identity_provider: OIDC
       threads: 4
 
     prod:
