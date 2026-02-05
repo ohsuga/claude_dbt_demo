@@ -21,7 +21,7 @@ claude_dbt_demo:
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
       schema: "{{ env_var('DBT_SCHEMA') }}"
       authenticator: workload_identity
-      workload_identity_provider: OIDC
+      workload_identity_provider: OIDC 
       threads: 4
 
     prod:
