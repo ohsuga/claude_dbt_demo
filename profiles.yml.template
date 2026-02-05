@@ -14,15 +14,14 @@ claude_dbt_demo:
 
     ci:
       type: snowflake
-      connection_name: ci_connection
+      # dbt を介さず環境変数から直接読み込ませるため、最低限の設定のみ記述
       account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
       user: "{{ env_var('SNOWFLAKE_USER') }}"
-      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
-      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
-      schema: "{{ env_var('DBT_SCHEMA', 'DBT_CI') }}"
+      schema: "{{ env_var('DBT_SCHEMA') }}"
       authenticator: workload_identity
-      workload_identity_provider: OIDC
+      # ここで指定しても無視される可能性があるため、環境変数(Step 2)を併用します
+      workload_identity_provider: OIDC 
       threads: 4
 
     prod:
