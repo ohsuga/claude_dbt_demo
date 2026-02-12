@@ -27,6 +27,7 @@ concurrency:
 jobs:
   dbt-ci:
     runs-on: ubuntu-latest
+    environment: ci
 
     env:
       # Snowflake CLI 接続用 (connection名 'ci' )
