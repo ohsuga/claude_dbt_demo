@@ -126,11 +126,9 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          dbt run-operation drop_schema_if_exists \
-          --args "{schema_name: ${{ env.DBT_SCHEMA }}}" \
-          --target ci
+          snow sql --connection ci -q \
+          "DROP SCHEMA IF EXISTS $SNOWFLAKE_CONNECTIONS_CI_DATABASE.$DBT_SCHEMA"
 
       - name: Clean up profiles.yml
         if: always()
         run: rm -f profiles.yml
-EOF
