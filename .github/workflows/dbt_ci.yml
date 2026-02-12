@@ -29,14 +29,24 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DBT_PROFILES_DIR: .
-      DBT_SCHEMA: DBT_PR_${{ github.event.pull_request.number }}
+      # Snowflake CLI 接続用 (connection名 'ci' )
+      SNOWFLAKE_CONNECTIONS_CI_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_CONNECTIONS_CI_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_CONNECTIONS_CI_AUTHENTICATOR: 'workload_identity'
+      SNOWFLAKE_CONNECTIONS_CI_WORKLOAD_IDENTITY_PROVIDER: 'OIDC'
+      SNOWFLAKE_CONNECTIONS_CI_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_CONNECTIONS_CI_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      SNOWFLAKE_CONNECTIONS_CI_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+      
+      # dbt プロファイルが参照する環境変数
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
       SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
       SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
       SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-      
+      DBT_SCHEMA: "DBT_PR_${{ github.event.pull_request.number }}"
+      DBT_PROFILES_DIR: "."
+
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v6
@@ -55,31 +65,9 @@ jobs:
       - name: Install dbt
         run: |
           pip install --upgrade pip
-          pip install "dbt-core==1.11.*" "dbt-snowflake==1.11.*"
+          # snowflake-cli は進化が早いため適宜バージョン見直しが望ましい
+          pip install "snowflake-cli-python==3.14.*" "dbt-snowflake==1.11.*"
 
-      - name: Get GitHub OIDC Token
-        id: get_token
-        run: |
-          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://snowflake.com" | jq -r '.value')
-          echo "SNOWFLAKE_TOKEN=$TOKEN" >> $GITHUB_ENV
-          
-      - name: Create Snowflake Config
-        run: |
-          mkdir -p ~/.snowflake
-          cat <<EOF > ~/.snowflake/config.toml
-          [connections.ci_connection]
-          account = "${{ secrets.SNOWFLAKE_ACCOUNT }}"
-          user = "${{ secrets.SNOWFLAKE_USER }}"
-          role = "${{ secrets.SNOWFLAKE_ROLE }}"
-          warehouse = "${{ secrets.SNOWFLAKE_WAREHOUSE }}"
-          database = "${{ secrets.SNOWFLAKE_DATABASE }}"
-          authenticator = "WORKLOAD_IDENTITY"
-          workload_identity_provider = "OIDC"
-          token = "${{ env.SNOWFLAKE_TOKEN }}"
-          EOF
-          chmod 600 ~/.snowflake/config.toml
-          
       - name: Create profiles.yml from template
         run: cp profiles.yml.template profiles.yml
 
@@ -90,32 +78,27 @@ jobs:
         run: |
           cd main-branch
           cp ../profiles.yml.template profiles.yml
-          export DBT_PROFILES_DIR=.
           dbt deps
-          dbt parse --target ci --profiles-dir .
+          dbt parse --target prod --profiles-dir .
           cd ..
           mkdir -p state
           cp main-branch/target/manifest.json state/manifest.json
 
-      - name: check in dbt read parameter
-        run: |
-          dbt debug --target ci
-          
       - name: Create PR schema
         run: |
-          dbt run-operation create_schema_if_not_exists \
-          --args "{schema_name: ${{ env.DBT_SCHEMA }}}" \
-          --target ci
+          snow sql --connection ci -q \
+          "CREATE SCHEMA IF NOT EXISTS $SNOWFLAKE_CONNECTIONS_CI_DATABASE.$DBT_SCHEMA"
 
       - name: Run dbt build (Slim CI)
         id: dbt_build
         run: |
-          dbt build \
-          --select +state:modified+ \
-          --exclude test_name:relationships* \
-          --defer \
-          --state state \
-          --target ci
+          snow dbt build \
+            --connection ci \
+            --target ci \
+            --select +state:modified+ \
+            --exclude test_name:relationships* \
+            --defer \
+            --state state
 
       - name: Comment PR with results
         if: always()
@@ -150,3 +133,4 @@ jobs:
       - name: Clean up profiles.yml
         if: always()
         run: rm -f profiles.yml
+EOF
