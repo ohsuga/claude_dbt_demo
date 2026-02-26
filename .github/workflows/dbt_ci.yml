@@ -122,8 +122,8 @@ jobs:
         env:
           SNOWFLAKE_CONNECTIONS_CI_TOKEN: ${{ steps.get_token.outputs.id_token }}
         run: |
-          snow dbt build \
-            --connection ci \
+          snow dbt --connection ci -- \
+            build \
             --target ci \
             --select +state:modified+ \
             --exclude test_name:relationships* \
