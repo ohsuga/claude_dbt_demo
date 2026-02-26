@@ -87,6 +87,13 @@ jobs:
           mkdir -p state
           cp main-branch/target/manifest.json state/manifest.json
 
+      - name: Create Snowflake CLI config stub
+        run: |
+          mkdir -p ~/.snowflake
+          # 接続名 'ci' の枠だけを作成。中身は環境変数 SNOWFLAKE_CONNECTIONS_CI_... から自動ロードされる
+          echo "[connections.ci]" > ~/.snowflake/config.toml
+          chmod 600 ~/.snowflake/config.toml
+          
       - name: Create PR schema
         run: |
           snow sql --connection ci -q \
