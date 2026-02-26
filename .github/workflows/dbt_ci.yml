@@ -123,7 +123,7 @@ jobs:
           SNOWFLAKE_DEFAULT_CONNECTION_NAME: ci
           SNOWFLAKE_CONNECTIONS_CI_TOKEN: ${{ steps.get_token.outputs.id_token }}
         run: |
-          snow dbt -- build \
+          snow dbt build \
             --target ci \
             --select +state:modified+ \
             --exclude test_name:relationships* \
