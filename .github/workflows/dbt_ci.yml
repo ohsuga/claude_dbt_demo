@@ -122,13 +122,7 @@ jobs:
         env:
           SNOWFLAKE_CONNECTIONS_CI_TOKEN: ${{ steps.get_token.outputs.id_token }}
         run: |
-          snow --connection ci dbt -- \
-              build \
-              --target ci \
-              --select +state:modified+ \
-              --exclude test_name:relationships* \
-              --defer \
-              --state state
+          snow dbt --connection ci -- build --target ci --select +state:modified+ --exclude test_name:relationships* --defer --state state
 
       - name: Comment PR with results
         if: always()
