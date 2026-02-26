@@ -66,9 +66,9 @@ jobs:
       - name: Install dbt and Snowflake CLI
         run: |
           pip install --upgrade pip
-          # snowflake-cli は pipx で隔離インストール（v3系コネクタを内封）
+          # snowflake-cli は pipx で隔離インストール（v3系コネクタに依存）
           pipx install "snowflake-cli==3.14.*"
-          # dbt-snowflake は通常インストール（v4系コネクタを使用）
+          # dbt-snowflake は通常インストール（v4系コネクタに依存）
           pip install "dbt-snowflake==1.11.*"
 
       - name: Create profiles.yml from template
