@@ -120,10 +120,15 @@ jobs:
       - name: Run dbt build (Slim CI)
         id: dbt_build
         env:
+          SNOWFLAKE_DEFAULT_CONNECTION_NAME: ci
           SNOWFLAKE_CONNECTIONS_CI_TOKEN: ${{ steps.get_token.outputs.id_token }}
         run: |
-          snow dbt --connection ci -- build --target ci --select +state:modified+ --exclude test_name:relationships* --defer --state state
-
+          snow dbt -- build \
+            --target ci \
+            --select +state:modified+ \
+            --exclude test_name:relationships* \
+            --defer \
+            --state state
       - name: Comment PR with results
         if: always()
         uses: actions/github-script@v8
