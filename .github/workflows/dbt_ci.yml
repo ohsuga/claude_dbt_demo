@@ -50,12 +50,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install dbt (pin recommended)
         run: |
           pip install --upgrade pip
-          pip install "dbt-core==1.10.*" "dbt-snowflake==1.10.*"
+          pip install "dbt-core==1.11.*" "dbt-snowflake==1.11.*"
 
       - name: Create profiles.yml from template
         run: cp profiles.yml.template profiles.yml
