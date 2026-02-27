@@ -21,6 +21,7 @@ claude_dbt_demo:
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
       schema: "{{ env_var('DBT_SCHEMA') }}"
       authenticator: snowflake_jwt
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '/tmp/snowflake_key.p8') }}"
       threads: 4
 
     prod:
@@ -32,4 +33,5 @@ claude_dbt_demo:
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
       schema: DBT_PROD
       authenticator: snowflake_jwt
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '/tmp/snowflake_key.p8') }}"
       threads: 8
