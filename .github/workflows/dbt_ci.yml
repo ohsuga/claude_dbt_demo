@@ -1,25 +1,22 @@
 name: dbt CI (PR Verification)
 
 on:
-  workflow_dispatch
-#   pull_request:
-#     branches:
-#       - main
-#     paths:
-#       - "models/**"
-#       - "tests/**"
-#       - "macros/**"
-#       - "seeds/**"
-#       - "snapshots/**"
-#       - "dbt_project.yml"
-#       - "packages.yml"
-#       - "profiles.yml.template"
-#       - ".github/workflows/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "models/**"
+      - "tests/**"
+      - "macros/**"
+      - "seeds/**"
+      - "snapshots/**"
+      - "dbt_project.yml"
+      - "packages.yml"
+      - "profiles.yml.template"
+      - ".github/workflows/**"
 
 permissions:
   contents: read
   pull-requests: write
-  id-token: write # OIDC 認証に必須
 
 concurrency:
   group: dbt-ci-pr-${{ github.event.pull_request.number }}
@@ -28,52 +25,45 @@ concurrency:
 jobs:
   dbt-ci:
     runs-on: ubuntu-latest
-    environment: ci
 
     env:
-      # Snowflake CLI 接続用 (connection名 'ci' )
-      SNOWFLAKE_CONNECTIONS_CI_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_CONNECTIONS_CI_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_CONNECTIONS_CI_AUTHENTICATOR: 'workload_identity'
-      SNOWFLAKE_CONNECTIONS_CI_WORKLOAD_IDENTITY_PROVIDER: 'OIDC'
-      SNOWFLAKE_CONNECTIONS_CI_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      SNOWFLAKE_CONNECTIONS_CI_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-      SNOWFLAKE_CONNECTIONS_CI_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-      
-      # dbt プロファイルが参照する環境変数
+      DBT_PROFILES_DIR: .
+      DBT_SCHEMA: DBT_PR_${{ github.event.pull_request.number }}
+
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
       SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
       SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
       SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-      DBT_SCHEMA: "DBT_PR_${{ github.event.pull_request.number }}"
-      DBT_PROFILES_DIR: "."
+      SNOWFLAKE_PRIVATE_KEY_PATH: rsa_key.p8
 
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Checkout main branch for state comparison
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: main
           path: main-branch
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
-      - name: Install dbt and Snowflake CLI
+      - name: Install dbt (pin recommended)
         run: |
           pip install --upgrade pip
-          # snowflake-cli は pipx で隔離インストール（v3系コネクタに依存）
-          pipx install "snowflake-cli==3.14.*"
-          # dbt-snowflake は通常インストール（v4系コネクタに依存）
-          pip install "dbt-snowflake==1.11.*"
+          pip install "dbt-core==1.10.*" "dbt-snowflake==1.10.*"
 
       - name: Create profiles.yml from template
         run: cp profiles.yml.template profiles.yml
+
+      - name: Setup Snowflake private key
+        run: |
+          printf "%s" "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > rsa_key.p8
+          chmod 600 rsa_key.p8
 
       - name: Install dbt packages (PR)
         run: dbt deps
@@ -81,58 +71,31 @@ jobs:
       - name: Generate state manifest from main branch
         run: |
           cd main-branch
+          # Use profiles.yml.template from current branch (not main)
           cp ../profiles.yml.template profiles.yml
+          cp ../rsa_key.p8 ./rsa_key.p8
+          export DBT_PROFILES_DIR=.
           dbt deps
           dbt parse --target prod --profiles-dir .
           cd ..
           mkdir -p state
           cp main-branch/target/manifest.json state/manifest.json
 
-      - name: Create Snowflake CLI config stub
-        run: |
-          mkdir -p ~/.snowflake
-          # 接続名 'ci' の枠だけを作成。中身は環境変数 SNOWFLAKE_CONNECTIONS_CI_... から自動ロードされる
-          echo "[connections.ci]" > ~/.snowflake/config.toml
-          chmod 600 ~/.snowflake/config.toml
-          
-      - name: Fetch GitHub OIDC Token
-        id: get_token
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const id_token = await core.getIDToken('https://snowflakecomputing.com');
-            core.setOutput('id_token', id_token);
+      - name: Run dbt debug (optional but helpful)
+        run: dbt debug --target ci
 
-      - name: Create PR schema
-        env:
-          SNOWFLAKE_CONNECTIONS_CI_TOKEN: ${{ steps.get_token.outputs.id_token }}
+      - name: Create PR schema (optional)
         run: |
-          snow sql --connection ci -q \
-          "CREATE SCHEMA IF NOT EXISTS $SNOWFLAKE_CONNECTIONS_CI_DATABASE.$DBT_SCHEMA"
-      
-      
-      - name: Create PR schema
-        env:
-          SNOWFLAKE_CONNECTIONS_CI_TOKEN: ${{ steps.get_token.outputs.id_token }}
-        run: |
-          snow sql --connection ci -q \
-          "CREATE SCHEMA IF NOT EXISTS $SNOWFLAKE_CONNECTIONS_CI_DATABASE.$DBT_SCHEMA"
+          dbt run-operation create_schema_if_not_exists             --args "{schema_name: ${{ env.DBT_SCHEMA }}}"             --target ci
 
       - name: Run dbt build (Slim CI)
         id: dbt_build
-        env:
-          SNOWFLAKE_DEFAULT_CONNECTION_NAME: ci
-          SNOWFLAKE_CONNECTIONS_CI_TOKEN: ${{ steps.get_token.outputs.id_token }}
         run: |
-          snow dbt build \
-            --target ci \
-            --select +state:modified+ \
-            --exclude test_name:relationships* \
-            --defer \
-            --state state
+          dbt build             --select +state:modified+             --exclude test_name:relationships*             --defer             --state state             --target ci
+
       - name: Comment PR with results
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             const outcome = '${{ steps.dbt_build.outcome }}';
@@ -155,12 +118,9 @@ jobs:
       - name: Clean up PR schema
         if: always()
         continue-on-error: true
-        env:
-          SNOWFLAKE_CONNECTIONS_CI_TOKEN: ${{ steps.get_token.outputs.id_token }}
         run: |
-          snow sql --connection ci -q \
-          "DROP SCHEMA IF EXISTS $SNOWFLAKE_CONNECTIONS_CI_DATABASE.$DBT_SCHEMA"
+          dbt run-operation drop_schema_if_exists             --args "{schema_name: ${{ env.DBT_SCHEMA }}}"             --target ci
 
-      - name: Clean up profiles.yml
+      - name: Clean up private key
         if: always()
-        run: rm -f profiles.yml
+        run: rm -f rsa_key.p8 profiles.yml
