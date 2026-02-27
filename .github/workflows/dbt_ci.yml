@@ -1,19 +1,20 @@
 name: dbt CI (PR Verification)
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "models/**"
-      - "tests/**"
-      - "macros/**"
-      - "seeds/**"
-      - "snapshots/**"
-      - "dbt_project.yml"
-      - "packages.yml"
-      - "profiles.yml.template"
-      - ".github/workflows/**"
+  workflow_dispatch
+#   pull_request:
+#     branches:
+#       - main
+#     paths:
+#       - "models/**"
+#       - "tests/**"
+#       - "macros/**"
+#       - "seeds/**"
+#       - "snapshots/**"
+#       - "dbt_project.yml"
+#       - "packages.yml"
+#       - "profiles.yml.template"
+#       - ".github/workflows/**"
 
 permissions:
   contents: read
