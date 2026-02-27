@@ -20,8 +20,7 @@ claude_dbt_demo:
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
       schema: "{{ env_var('DBT_SCHEMA') }}"
-      authenticator: workload_identity
-      workload_identity_provider: 'OIDC'
+      authenticator: snowflake_jwt
       threads: 4
 
     prod:
@@ -32,6 +31,5 @@ claude_dbt_demo:
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
       schema: DBT_PROD
-      authenticator: workload_identity
-      workload_identity_provider: 'OIDC'
+      authenticator: snowflake_jwt
       threads: 8
