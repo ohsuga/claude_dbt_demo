@@ -33,3 +33,4 @@ models:
   claude_dbt_demo:
     staging:
       +materialized: view
+## CI Test
