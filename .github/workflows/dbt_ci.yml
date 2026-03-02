@@ -107,9 +107,13 @@ jobs:
           warehouse = "${SNOWFLAKE_WAREHOUSE}"
           database = "${SNOWFLAKE_DATABASE}"
           authenticator = "SNOWFLAKE_JWT"
-          private_key_path = "rsa_key.p8"
+          private_key_path = "${GITHUB_WORKSPACE}/rsa_key.p8"
           EOF
           chmod 600 ~/.snowflake/config.toml
+          
+      - name: Test Snowflake CLI Connection
+        run: |
+          snow connection test --connection github_connection
           
       - name: Create PR Schema
         run: |
