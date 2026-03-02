@@ -108,8 +108,8 @@ jobs:
           
       - name: Create PR Schema
         run: |
-          snow sql -q "CREATE SCHEMA IF NOT EXISTS ${{ env.SNOWFLAKE_DATABASE }}.${{ env.DBT_SCHEMA }}" --connection github_connection --no-warehouse
-      
+          snow sql -q "CREATE SCHEMA IF NOT EXISTS ${{ env.SNOWFLAKE_DATABASE }}.${{ env.DBT_SCHEMA }}" --connection github_connection --warehouse ""
+
       - name: Run dbt build (Slim CI)
         id: dbt_build
         run: |
@@ -141,7 +141,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          snow sql -q "DROP SCHEMA IF EXISTS ${{ env.SNOWFLAKE_DATABASE }}.${{ env.DBT_SCHEMA }}" --connection github_connection --no-warehouse
+          snow sql -q "DROP SCHEMA IF EXISTS ${{ env.SNOWFLAKE_DATABASE }}.${{ env.DBT_SCHEMA }}" --connection github_connection --warehouse ""
       - name: Clean up private key
         if: always()
         run: rm -f rsa_key.p8 profiles.yml
