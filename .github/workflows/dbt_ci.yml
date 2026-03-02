@@ -99,15 +99,15 @@ jobs:
       - name: Setup Snowflake CLI config
         run: |
           mkdir -p ~/.snowflake
-          cat <<EOF > ~/.snowflake/config.toml
+          cat <<'EOF' > ~/.snowflake/config.toml
           [connections.github_connection]
-          account = "${{ env.SNOWFLAKE_ACCOUNT }}"
-          user = "${{ env.SNOWFLAKE_USER }}"
-          role = "${{ env.SNOWFLAKE_ROLE }}"
-          warehouse = "${{ env.SNOWFLAKE_WAREHOUSE }}"
-          database = "${{ env.SNOWFLAKE_DATABASE }}"
-          authenticator = "snowflake_jwt"
-          private_key_path = "${{ env.SNOWFLAKE_PRIVATE_KEY_PATH }}"
+          account = "${SNOWFLAKE_ACCOUNT}"
+          user = "${SNOWFLAKE_USER}"
+          role = "${SNOWFLAKE_ROLE}"
+          warehouse = "${SNOWFLAKE_WAREHOUSE}"
+          database = "${SNOWFLAKE_DATABASE}"
+          authenticator = "SNOWFLAKE_JWT"
+          private_key_path = "${SNOWFLAKE_PRIVATE_KEY_PATH}"
           EOF
           chmod 600 ~/.snowflake/config.toml
           
