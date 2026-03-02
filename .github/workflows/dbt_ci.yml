@@ -113,6 +113,7 @@ jobs:
           
       - name: Test Snowflake CLI Connection
         run: |
+          cat ~/.snowflake/config.toml
           snow connection test --connection github_connection
           
       - name: Create PR Schema
