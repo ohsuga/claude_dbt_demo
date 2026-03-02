@@ -90,6 +90,26 @@ jobs:
       - name: Run dbt debug (optional but helpful)
         run: dbt debug --target ci
 
+      - name: Install Snowflake CLI
+        run: |
+          pipx install "snowflake-cli>=3.0.0,<4.0.0"
+          # パスを通す（現在のステップと以降のステップで有効にする）
+          echo "$(pipx list --bin-dir)" >> $GITHUB_PATH
+
+      - name: Setup Snowflake CLI config
+        run: |
+          mkdir -p ~/.snowflake
+          cat <<EOF > ~/.snowflake/config.toml
+          [connections.github_connection]
+          account = "${{ env.SNOWFLAKE_ACCOUNT }}"
+          user = "${{ env.SNOWFLAKE_USER }}"
+          role = "${{ env.SNOWFLAKE_ROLE }}"
+          warehouse = "${{ env.SNOWFLAKE_WAREHOUSE }}"
+          database = "${{ env.SNOWFLAKE_DATABASE }}"
+          authenticator = "snowflake_jwt"
+          private_key_path = "${{ env.SNOWFLAKE_PRIVATE_KEY_PATH }}"
+          EOF
+          
       - name: Create PR Schema
         run: |
           snow sql -q "CREATE SCHEMA IF NOT EXISTS ${{ env.SNOWFLAKE_DATABASE }}.${{ env.DBT_SCHEMA }}" --connection github_connection
