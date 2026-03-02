@@ -108,6 +108,7 @@ jobs:
           database = "${SNOWFLAKE_DATABASE}"
           authenticator = "SNOWFLAKE_JWT"
           private_key_path = "rsa_key.p8"
+          EOF
           chmod 600 ~/.snowflake/config.toml
           
       - name: Create PR Schema
