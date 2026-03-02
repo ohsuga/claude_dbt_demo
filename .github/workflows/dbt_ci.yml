@@ -93,8 +93,7 @@ jobs:
       - name: Install Snowflake CLI
         run: |
           pipx install "snowflake-cli>=3.0.0,<4.0.0"
-          # パスを通す（現在のステップと以降のステップで有効にする）
-          echo "$(pipx list --bin-dir)" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Setup Snowflake CLI config
         run: |
