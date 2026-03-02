@@ -66,11 +66,6 @@ jobs:
           printf "%s" "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > rsa_key.p8
           chmod 600 rsa_key.p8
 
-      - name: Debug Key File (Check Header)
-        run: |
-          ls -l rsa_key.p8
-          head -n 1 rsa_key.p8
-          
       - name: Install dbt packages (PR)
         run: dbt deps
 
@@ -110,11 +105,6 @@ jobs:
           private_key_path = "${ABS_KEY_PATH}"
           EOF
           chmod 600 ~/.snowflake/config.toml
-          
-      - name: Test Snowflake CLI Connection
-        run: |
-          cat ~/.snowflake/config.toml
-          snow connection test --connection github_connection
           
       - name: Create PR Schema
         run: |
