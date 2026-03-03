@@ -48,7 +48,6 @@ final as (
         total_orders,
         total_revenue,
         avg_order_value,
-        customer_lifetime_days / total_orders as avg_days_par_order,
 
         -- 日付指標
         first_order_date,
