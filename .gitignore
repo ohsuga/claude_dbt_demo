@@ -26,3 +26,8 @@ Thumbs.db
 profiles.yml  # 接続情報を含むためコミットしない
 .env
 *.p8         # 秘密鍵/公開鍵（混在防止のため拡張子で除外）
+
+# 各個人環境固有のファイル
+start-vscode.ps1
+start-vscode.lnk
+profiles.yml
