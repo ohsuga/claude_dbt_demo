@@ -1,0 +1,139 @@
+name: dbt CD (Production Deployment)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "models/**"
+      - "tests/**"
+      - "macros/**"
+      - "seeds/**"
+      - "snapshots/**"
+      - "dbt_project.yml"
+      - "packages.yml"
+      - "profiles.yml.template"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dbt-cd-production
+  cancel-in-progress: false  # 本番はキャンセルせず順番に実行する想定
+
+jobs:
+  dbt-cd:
+    runs-on: ubuntu-latest
+    environment: production  # 承認ゲート（任意）: 不要ならこの行を削除
+
+    env:
+      DBT_PROFILES_DIR: .
+
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+      SNOWFLAKE_PRIVATE_KEY_PATH: rsa_key.p8
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dbt (pin recommended)
+        run: |
+          pip install --upgrade pip
+          pip install "dbt-core==1.11.*" "dbt-snowflake==1.11.*"
+
+      - name: Create profiles.yml from template
+        run: cp profiles.yml.template profiles.yml
+
+      - name: Setup Snowflake private key
+        run: |
+          printf "%s" "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > rsa_key.p8
+          chmod 600 rsa_key.p8
+
+      - name: Install dbt packages
+        run: dbt deps
+
+      - name: Pre-deployment check (compile)
+        run: dbt compile --target prod
+
+      # ※「デプロイ前テスト」は運用方針により追加（本文で解説）
+      # - name: Pre-deployment smoke tests (optional)
+      #   run: dbt test --target prod --select tag:smoke
+
+      - name: Deploy (dbt build)
+        id: dbt_build
+        run: |
+          # フルビルド（全モデル・全テストを実行）
+          dbt build --target prod
+
+      - name: Post-deployment verification
+        if: success()
+        run: |
+          echo "✅ Deployment completed successfully at $(date)"
+          echo "📦 Commit: $GITHUB_SHA"
+          echo "👤 Actor: $GITHUB_ACTOR"
+          echo "🎯 Target: prod"
+          echo "🗄️  Database: $SNOWFLAKE_DATABASE"
+
+      - name: Deployment failed
+        if: failure()
+        run: |
+          echo "❌ Deployment failed at $(date)"
+          echo "📦 Commit: $GITHUB_SHA"
+          echo "👤 Actor: $GITHUB_ACTOR"
+          exit 1
+
+      - name: Clean up private key
+        if: always()
+        run: rm -f rsa_key.p8 profiles.yml
+
+      # Slack通知（任意）: 使う場合は Secrets に SLACK_WEBHOOK_URL を追加
+      # - name: Notify Slack (success)
+      #   if: success()
+      #   uses: slackapi/slack-github-action@v1.27.0
+      #   with:
+      #     payload: |
+      #       {
+      #         "text": "✅ dbt Production Deployment Successful",
+      #         "blocks": [
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*dbt Production Deployment Successful* ✅\n\n- Commit: `${{ github.sha }}`\n- Actor : `${{ github.actor }}`\n- Run   : https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      #             }
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      # - name: Notify Slack (failure)
+      #   if: failure()
+      #   uses: slackapi/slack-github-action@v1.27.0
+      #   with:
+      #     payload: |
+      #       {
+      #         "text": "❌ dbt Production Deployment Failed",
+      #         "blocks": [
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*dbt Production Deployment Failed* ❌\n\n- Commit: `${{ github.sha }}`\n- Actor : `${{ github.actor }}`\n- Run   : https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\nログを確認し、必要ならロールバックを検討してください。"
+      #             }
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
