@@ -74,6 +74,24 @@ jobs:
           # フルビルド（全モデル・全テストを実行）
           dbt build --target prod
 
+      - name: Record deployment (success)
+        if: success()
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: |
+          dbt run-operation log_deployment_info --args '{"status": "success"}' --target prod
+
+      - name: Record deployment (failure)
+        if: failure()
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: |
+          dbt run-operation log_deployment_info --args '{"status": "failure"}' --target prod
+
       - name: Post-deployment verification
         if: success()
         run: |
